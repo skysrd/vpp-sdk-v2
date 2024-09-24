@@ -1,7 +1,7 @@
 package auth;
 
 import common.ClientInfo;
-import dr.enums.ServiceType;
+import common.ServiceType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

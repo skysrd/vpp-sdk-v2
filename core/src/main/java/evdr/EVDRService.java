@@ -1,4 +1,4 @@
-package dr;
+package evdr;
 
 import auth.Token;
 import auth.TokenManager;
@@ -6,14 +6,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import common.ClientInfo;
 import common.ServiceProperties;
-import dr.dto.BulkPowerConsumptionDataReq;
-import dr.dto.CustomerRegisterInfoReq;
-import dr.dto.CustomerRegisterInfoResponse;
-import dr.dto.DRServiceResponse;
-import dr.dto.PowerConsumptionDataReq;
-import dr.dto.UserAgreementFileReq;
-import dr.dto.UserAgreementFileResponse;
-import dr.enums.ServiceType;
+import evdr.dto.BulkPowerConsumptionDataReq;
+import evdr.dto.CustomerRegisterInfoReq;
+import evdr.dto.CustomerRegisterInfoResponse;
+import evdr.dto.DRServiceResponse;
+import evdr.dto.PowerConsumptionDataReq;
+import evdr.dto.UserAgreementFileReq;
+import evdr.dto.UserAgreementFileResponse;
+import common.ServiceType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 
 @Slf4j
-public class DRService {
+public class EVDRService {
 
     private final String BASE_SERVER_ADDRESS;
     private final TokenManager tokenManager;
@@ -34,7 +34,7 @@ public class DRService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final WebClient webClient;
 
-    public DRService(ServiceType serviceType, ClientInfo clientInfo) throws Exception {
+    public EVDRService(ServiceType serviceType, ClientInfo clientInfo) throws Exception {
         this.BASE_SERVER_ADDRESS = serviceProperties.getServerAddress(serviceType);
         this.tokenManager = new TokenManager(serviceType, clientInfo);
         this.clientInfo = clientInfo;
@@ -52,8 +52,6 @@ public class DRService {
 
         DRServiceResponse response = webClient.post()
                 .uri(serviceProperties.getDRServicePath("bulkPowerConsumptionData"))
-                .header("Authorization",getToken().getAccessToken())
-                .header("cpo-id", "005")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(req)
                 .retrieve()
@@ -76,8 +74,6 @@ public class DRService {
         log.info("[START] powerConsumptionData ");
         DRServiceResponse serviceResponse = webClient.post()
                 .uri(serviceProperties.getDRServicePath("powerConsumptionData"))
-                .header("Authorization",getToken().getAccessToken())
-                .header("cpo-id", "005")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(req)
                 .retrieve()
@@ -100,8 +96,6 @@ public class DRService {
 
         CustomerRegisterInfoResponse response = webClient.post()
                 .uri(serviceProperties.getDRServicePath("customerRegisterInfo"))
-                .header("Authorization",getToken().getAccessToken())
-                .header("cpo-id", "005")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(req)
                 .retrieve()
@@ -163,8 +157,6 @@ public class DRService {
 
         Mono<UserAgreementFileResponse> response = webClient.post()
                 .uri(serviceProperties.getDRServicePath("userAgreementFile"))
-                .header("Authorization",getToken().getAccessToken())
-                .header("cpo-id", "005")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .bodyValue(builder.build())
                 .retrieve()

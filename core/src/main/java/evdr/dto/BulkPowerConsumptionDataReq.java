@@ -1,4 +1,4 @@
-package dr.dto;
+package evdr.dto;
 
 import java.util.List;
 

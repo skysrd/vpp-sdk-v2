@@ -1,4 +1,4 @@
-package dr.dto;
+package evdr.dto;
 
 public class DRServiceResponse {
     private String transactionId;

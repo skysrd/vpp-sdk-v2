@@ -1,4 +1,4 @@
-package dr.enums;
+package common;
 
 public enum ServiceType {
     TB,

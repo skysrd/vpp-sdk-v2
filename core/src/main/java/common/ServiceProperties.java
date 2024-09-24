@@ -1,7 +1,5 @@
 package common;
 
-import dr.enums.ServiceType;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,5 +32,17 @@ public class ServiceProperties {
 
     public String getDRServicePath(String serviceName) {
         return properties.getProperty("dr.service.path." + serviceName);
+    }
+
+    public String getEnergyServicePath(String serviceName) {
+        return properties.getProperty("energy.service.path." + serviceName);
+    }
+
+    public String getKPXServicePath(String serviceName) {
+        return properties.getProperty("kpx.service.path." + serviceName);
+    }
+
+    public String getCpoId() {
+        return properties.getProperty("cpo.id");
     }
 }

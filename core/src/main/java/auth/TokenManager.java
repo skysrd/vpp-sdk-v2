@@ -2,7 +2,7 @@ package auth;
 
 import common.ClientInfo;
 import common.ServiceProperties;
-import dr.enums.ServiceType;
+import common.ServiceType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;

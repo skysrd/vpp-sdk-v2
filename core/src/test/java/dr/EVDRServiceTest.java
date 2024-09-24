@@ -1,13 +1,13 @@
 package dr;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import common.ClientInfo;
-import dr.dto.CustomerRegisterInfoReq;
-import dr.dto.CustomerRegisterInfoResponse;
-import dr.dto.DRServiceResponse;
-import dr.dto.UserAgreementFileReq;
-import dr.enums.ServiceType;
+import evdr.EVDRService;
+import evdr.dto.CustomerRegisterInfoReq;
+import evdr.dto.CustomerRegisterInfoResponse;
+import evdr.dto.DRServiceResponse;
+import evdr.dto.UserAgreementFileReq;
+import common.ServiceType;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,12 +21,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class DRServiceTest {
+class EVDRServiceTest {
     public ClientInfo clientInfo = new ClientInfo("herit", "ffe0356c-10c2-409c-8342-6d5328b90968");
-    public DRService drService = new DRService(ServiceType.TB, clientInfo);
+    public evdr.EVDRService EVDRService = new EVDRService(ServiceType.TB, clientInfo);
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    DRServiceTest() throws Exception {
+    EVDRServiceTest() throws Exception {
     }
 
     @Test
@@ -54,7 +54,7 @@ class DRServiceTest {
         CustomerRegisterInfoReq request = new CustomerRegisterInfoReq(List.of(item1));
 
         //when
-        CustomerRegisterInfoResponse response = drService.customerRegisterInfo(request);
+        CustomerRegisterInfoResponse response = EVDRService.customerRegisterInfo(request);
 
         //then
         assertThat(response).isNotNull();
@@ -100,7 +100,7 @@ class DRServiceTest {
         request.fileInfos = List.of(file1.getName(), file2.getName(), file3.getName(), file4.getName());
 
         //when
-        DRServiceResponse response = drService.userAgreementFile(request);
+        DRServiceResponse response = EVDRService.userAgreementFile(request);
 
         //then
         assertThat(response).isNotNull();
