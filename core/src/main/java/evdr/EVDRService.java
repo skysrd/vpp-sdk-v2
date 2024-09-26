@@ -1,116 +1,74 @@
 package evdr;
 
-import auth.Token;
-import auth.TokenManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import common.ClientInfo;
 import common.ServiceProperties;
+import common.ServiceType;
 import evdr.dto.BulkPowerConsumptionDataReq;
+import evdr.dto.BulkPowerConsumptionDataResponse;
 import evdr.dto.CustomerRegisterInfoReq;
 import evdr.dto.CustomerRegisterInfoResponse;
 import evdr.dto.DRServiceResponse;
+import evdr.dto.ParticipationRequest;
+import evdr.dto.ParticipationResultResponse;
+import evdr.dto.ParticipationResultReq;
 import evdr.dto.PowerConsumptionDataReq;
 import evdr.dto.UserAgreementFileReq;
 import evdr.dto.UserAgreementFileResponse;
-import common.ServiceType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import util.WebClientUtil;
 
 import java.io.IOException;
 
 @Slf4j
 public class EVDRService {
-
-    private final String BASE_SERVER_ADDRESS;
-    private final TokenManager tokenManager;
     private final ServiceProperties serviceProperties = ServiceProperties.getInstance();
-    private final ClientInfo clientInfo;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final WebClient webClient;
+    private final WebClientUtil webClientUtil;
 
     public EVDRService(ServiceType serviceType, ClientInfo clientInfo) throws Exception {
-        this.BASE_SERVER_ADDRESS = serviceProperties.getServerAddress(serviceType);
-        this.tokenManager = new TokenManager(serviceType, clientInfo);
-        this.clientInfo = clientInfo;
-        this.webClient = WebClient.builder().baseUrl(BASE_SERVER_ADDRESS)
-                .defaultHeader("Authorization", getToken().getAccessToken())
-                .defaultHeader("cpo-id", "005")
-                .build();
+        this.webClientUtil = new WebClientUtil(serviceType, clientInfo);
     }
 
-    //TODO: 각 기능 별 Log 작성
-
-    public DRServiceResponse bulkPowerConsumptionData(BulkPowerConsumptionDataReq req) throws Exception
+    //전력 사용량 벌크 전송
+    public BulkPowerConsumptionDataResponse bulkPowerConsumptionData(BulkPowerConsumptionDataReq req) throws Exception
     {
         log.info("[START] bulkPowerConsumptionData ");
 
-        DRServiceResponse response = webClient.post()
-                .uri(serviceProperties.getDRServicePath("bulkPowerConsumptionData"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(req)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(res -> {
-                    try {
-                        return objectMapper.readValue(res, DRServiceResponse.class);
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                })
-                .block();
+        String responseString = webClientUtil.postForString(serviceProperties.getDRServicePath("bulkPowerConsumptionData"), req);
 
-        return response;
-    }
-
-    public DRServiceResponse powerConsumptionData(PowerConsumptionDataReq req) throws Exception
-    {
-        log.info("[START] powerConsumptionData ");
-        DRServiceResponse serviceResponse = webClient.post()
-                .uri(serviceProperties.getDRServicePath("powerConsumptionData"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(req)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(res -> {
-                    try {
-                        return objectMapper.readValue(res, DRServiceResponse.class);
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                })
-                .block();
+        BulkPowerConsumptionDataResponse serviceResponse = webClientUtil.typeCast(responseString, BulkPowerConsumptionDataResponse.class);
 
         return serviceResponse;
     }
 
+    //전력사용량 전송
+    public DRServiceResponse powerConsumptionData(PowerConsumptionDataReq req) throws Exception
+    {
+        log.info("[START] powerConsumptionData ");
+
+        String responseString = webClientUtil.postForString(serviceProperties.getDRServicePath("powerConsumptionData"), req);
+
+        DRServiceResponse serviceResponse = webClientUtil.typeCast(responseString, DRServiceResponse.class);
+
+        return serviceResponse;
+    }
+
+    //고객 가입 정보 전송
     public CustomerRegisterInfoResponse customerRegisterInfo(CustomerRegisterInfoReq req) throws Exception {
         log.info("[START] customerRegisterInfo ");
 
-        CustomerRegisterInfoResponse response = webClient.post()
-                .uri(serviceProperties.getDRServicePath("customerRegisterInfo"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(req)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(res -> {
-                    try {
-                        return objectMapper.readValue(res, CustomerRegisterInfoResponse.class);
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                })
-                .block();
+        String responseString = webClientUtil.postForString(serviceProperties.getDRServicePath("customerRegisterInfo"), req);
 
-        return response;
+        CustomerRegisterInfoResponse customerRegisterInfoResponse = webClientUtil.typeCast(responseString, CustomerRegisterInfoResponse.class);
+
+        return customerRegisterInfoResponse;
     }
 //
 //    public DRServiceResponse customerUnregisterInfo(ClientInfo clientInfo, CustomerUnregisterReq req) throws Exception
@@ -135,6 +93,8 @@ public class EVDRService {
 //        return null;
 //    }
 
+
+    //사용자 등록동의서 전송
     public DRServiceResponse userAgreementFile(UserAgreementFileReq req) throws Exception
     {
         log.info("[START] userAgreementFile ");
@@ -155,7 +115,7 @@ public class EVDRService {
 
         log.info(builder.toString());
 
-        Mono<UserAgreementFileResponse> response = webClient.post()
+        Mono<UserAgreementFileResponse> response = webClientUtil.getWebClient().post()
                 .uri(serviceProperties.getDRServicePath("userAgreementFile"))
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .bodyValue(builder.build())
@@ -174,8 +134,25 @@ public class EVDRService {
         return response.block();
     }
 
-    public Token getToken() throws Exception {
-        return tokenManager.getToken();
+    //DR 결과 정보 전송
+    public ParticipationResultResponse participationResult(ParticipationResultReq req) throws Exception
+    {
+        log.info("[START] participationResult ");
+
+        String responseString = webClientUtil.postForString(serviceProperties.getDRServicePath("participationResult"), req);
+
+        ParticipationResultResponse serviceResponse = webClientUtil.typeCast(responseString, ParticipationResultResponse.class);
+
+        return serviceResponse;
+    }
+
+    public String participation(ParticipationRequest req) throws Exception {
+        log.info("[START] participation ");
+
+        String responseString = webClientUtil.postForString(serviceProperties.getDRServicePath("participation"), req);
+
+        return responseString;
+
     }
 
 //    public DRServiceResponse bulkPowerConsumptionData;

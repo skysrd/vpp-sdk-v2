@@ -10,9 +10,11 @@ import common.ServiceType;
 import energy.dto.CreateEnergyGroupRequest;
 import energy.dto.CreateEnergyResourceRequest;
 import evdr.dto.DRServiceResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
+@Slf4j
 public class EnergyService {
     private final String BASE_SERVER_ADDRESS;
     private final TokenManager tokenManager;
@@ -31,30 +33,30 @@ public class EnergyService {
                 .build();
     }
 
-    public DRServiceResponse createEnergyGroup(CreateEnergyGroupRequest createEnergyGroupRequest) throws Exception {
+    //분산자원 등록
+    public DRServiceResponse createEnergyResource(CreateEnergyResourceRequest createEnergyResourceRequest) throws Exception {
+        String response = postStringBlock(serviceProperties.getEnergyServicePath("createEnergyResource"), MediaType.APPLICATION_JSON, createEnergyResourceRequest);
+
+        DRServiceResponse serviceResponse = objectMapper.readValue(response, DRServiceResponse.class);
+
+        return serviceResponse;
+    }
+
+    //Class Type 받아오는 block 요청
+    private <T> T postBlock(String path, MediaType mediaType, Object body, Class<T> responseType) {
         return webClient.post()
-                .uri(serviceProperties.getEnergyServicePath("createEnergyGroup"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(createEnergyGroupRequest)
+                .uri(path)
+                .contentType(mediaType)
+                .bodyValue(body)
                 .retrieve()
-                .bodyToMono(DRServiceResponse.class)
+                .bodyToMono(responseType)
+                .doOnError(e -> log.error("Error: ", e))
                 .block();
     }
 
-    public DRServiceResponse createEnergyResource(CreateEnergyResourceRequest createEnergyResourceRequest) throws Exception {
-        return webClient.post()
-                .uri(serviceProperties.getEnergyServicePath("createEnergyResource"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(createEnergyResourceRequest)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(response -> {
-                    try {
-                        return objectMapper.readValue(response, DRServiceResponse.class);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .block();
+    //String Type 받아오는 block 요청
+    //객체 내에 별도 객체가 있는 다차원 객체에 사용
+    private String postStringBlock(String path, MediaType mediaType, Object body) {
+        return postBlock(path, mediaType, body, String.class);
     }
 }
