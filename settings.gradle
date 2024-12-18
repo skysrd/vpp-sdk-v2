@@ -1,3 +1,4 @@
 rootProject.name = 'vpp-sdk-v2'
 include 'core'
+include 'plusDr'
 
